@@ -192,6 +192,80 @@ namespace Compilatori2Laba
         }
 
         // 🔹 Функция для анализа текста
+        //private void buttonScan_Click(object sender, EventArgs e)
+        //{
+        //    //// Читаем текст из редактора
+        //    //string inputText = richTextBox1.Text;
+
+        //    //// Получаем токены с помощью сканера
+        //    //Scanner scanner = new Scanner();
+        //    //List<Token> tokens = scanner.Scan(inputText);
+
+        //    //// Создаем парсер и выполняем разбор объявления
+        //    //Parser parser = new Parser(tokens);
+        //    //ParseResult parseResult = parser.ParseDeclaration();
+
+        //    //// Очищаем окно вывода результатов
+        //    //richTextBox2.Clear();
+
+        //    //// Вывод пути состояний КА
+        //    //richTextBox2.AppendText("Путь состояний КА:\n");
+        //    //foreach (var state in parseResult.States)
+        //    //{
+        //    //    richTextBox2.AppendText(state + "\n");
+        //    //}
+        //    //richTextBox2.AppendText("\nРезультат анализа:\n");
+
+        //    //// Если ошибок нет
+        //    //if (parseResult.IsSuccess)
+        //    //{
+        //    //    richTextBox2.AppendText("Анализ успешно завершен. Ошибок не обнаружено.\n");
+        //    //}
+        //    //else
+        //    //{
+        //    //    richTextBox2.AppendText("Обнаружены ошибки:\n");
+        //    //    foreach (var error in parseResult.ErrorMessages)
+        //    //    {
+        //    //        richTextBox2.AppendText(error + "\n");
+        //    //    }
+        //    //}
+        //    // Читаем исходный текст из редактора-----------------------------------------------
+        //    string inputText = richTextBox1.Text;
+
+        //    // Получаем список токенов с помощью сканера
+        //    Scanner scanner = new Scanner();
+        //    List<Token> tokens = scanner.Scan(inputText);
+
+        //    // Создаем и запускаем парсер для разбора объявления
+        //    Parser parser = new Parser(tokens);
+        //    var parseResult = parser.ParseDeclaration();
+
+        //    // Очищаем окно вывода результатов
+        //    richTextBox2.Clear();
+
+        //    // Выводим путь состояний конечного автомата
+        //    richTextBox2.AppendText("Путь состояний КА:\n");
+        //    foreach (var state in parseResult.States)
+        //    {
+        //        richTextBox2.AppendText(state + "\n");
+        //    }
+
+        //    richTextBox2.AppendText("\nРезультат анализа:\n");
+        //    // Если разбор успешен – выводим сообщение об отсутствии ошибок
+        //    if (parseResult.IsSuccess)
+        //    {
+        //        richTextBox2.AppendText("Анализ успешно завершен. Ошибок не обнаружено.\n");
+        //    }
+        //    // Иначе – выводим каждое сообщение об ошибке
+        //    else
+        //    {
+        //        richTextBox2.AppendText("Обнаружены ошибки:\n");
+        //        foreach (var error in parseResult.ErrorMessages)
+        //        {
+        //            richTextBox2.AppendText(error + "\n");
+        //        }
+        //    }//--------------------------------------------------------------------------------
+        //}
         private void buttonScan_Click(object sender, EventArgs e)
         {
             string inputText = richTextBox1.Text;
