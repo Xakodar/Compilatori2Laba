@@ -353,3 +353,178 @@
 //        }
 //    }
 //}
+using System;
+using System.Collections.Generic;
+
+namespace Compilatori2Laba
+{
+    public class ParseResult
+    {
+        // Если ошибок не обнаружено, IsSuccess будет true.
+        public bool IsSuccess { get; set; }
+        // Путь состояний конечного автомата для одной декларации
+        public List<string> States { get; set; } = new List<string>();
+        // Список сообщений об обнаруженных ошибках для одной декларации
+        public List<string> ErrorMessages { get; set; } = new List<string>();
+        // Счётчик ошибок для одной декларации
+        public int ErrorCount => ErrorMessages.Count;
+    }
+
+    public class Parser
+    {
+        private readonly List<Token> tokens;
+        private int index = 0;
+
+        public Parser(List<Token> tokens)
+        {
+            this.tokens = tokens;
+        }
+
+        /// <summary>
+        /// Разбирает все декларации во входном потоке токенов.
+        /// Каждая декларация соответствует правилу:
+        /// Declaration → 'const' Identifier ':' '&str' '=' StringLiteral ';'
+        /// Если декларации разделены переводами строки (или другими пробельными символами),
+        /// метод обрабатывает их последовательно.
+        /// </summary>
+        public List<ParseResult> ParseAllDeclarations()
+        {
+            List<ParseResult> results = new List<ParseResult>();
+            while (index < tokens.Count)
+            {
+                // Если оставшиеся токены состоят только из ошибок или пробелов, прерываем цикл.
+                ParseResult pr = ParseDeclaration();
+                results.Add(pr);
+            }
+            return results;
+        }
+
+        /// <summary>
+        /// Разбирает одну декларацию согласно грамматике:
+        /// Declaration → 'const' Identifier ':' '&str' '=' StringLiteral ';'
+        /// </summary>
+        public ParseResult ParseDeclaration()
+        {
+            ParseResult result = new ParseResult();
+
+            // S0: ожидается ключевое слово "const"
+            ExpectToken(TokenCode.Keyword, "const", "'const'",
+                new List<(TokenCode, string)>() { (TokenCode.Identifier, null) }, result);
+            result.States.Add("S0 -> S1: 'const'");
+
+            // S1: ожидается идентификатор
+            ExpectToken(TokenCode.Identifier, null, "идентификатор",
+                new List<(TokenCode, string)>() { (TokenCode.Separator, ":") }, result);
+            result.States.Add("S1 -> S2: Identifier");
+
+            // S2: ожидается символ ':'
+            ExpectToken(TokenCode.Separator, ":", "символ ':'",
+                new List<(TokenCode, string)>() { (TokenCode.Keyword, "&str") }, result);
+            result.States.Add("S2 -> S3: ':'");
+
+            // S3: ожидается тип "&str"
+            ExpectToken(TokenCode.Keyword, "&str", "тип '&str'",
+                new List<(TokenCode, string)>() { (TokenCode.AssignOp, "=") }, result);
+            result.States.Add("S3 -> S4: '&str'");
+
+            // S4: ожидается оператор '='
+            ExpectToken(TokenCode.AssignOp, "=", "оператор '='",
+                new List<(TokenCode, string)>() { (TokenCode.StringLiteral, null) }, result);
+            result.States.Add("S4 -> S5: '='");
+
+            // S5: ожидается строковый литерал
+            ExpectToken(TokenCode.StringLiteral, null, "строковый литерал",
+                new List<(TokenCode, string)>() { (TokenCode.EndOperator, ";") }, result);
+            result.States.Add("S5 -> S6: StringLiteral");
+
+            // S6: ожидается символ ';'
+            ExpectToken(TokenCode.EndOperator, ";", "символ ';'",
+                new List<(TokenCode, string)>(), result);
+            result.States.Add("S6 -> S7: ';'");
+
+            result.IsSuccess = result.ErrorMessages.Count == 0;
+            return result;
+        }
+
+        /// <summary>
+        /// Пытается "считать" ожидаемый токен.
+        /// Если ожидается ключевое слово, сравниваем только по лексеме.
+        /// Если текущий токен соответствует ожидаемому, он потребляется.
+        /// Если не соответствует и входит в follow‑множественное, считается, что ожидаемый отсутствует
+        /// (фиксируется ошибка виртуальной вставки), но токен не потребляется.
+        /// Если токен не соответствует и не входит в follow‑множественное, он считается лишним,
+        /// фиксируется ошибка, токен пропускается, и производится повторная попытка.
+        /// </summary>
+        private bool ExpectToken(TokenCode expectedCode, string expectedLexeme, string expectedDescription,
+            List<(TokenCode, string)> followSet, ParseResult result)
+        {
+            if (index >= tokens.Count)
+            {
+                result.ErrorMessages.Add($"Ошибка: отсутствует {expectedDescription}.");
+                return false;
+            }
+
+            Token current = tokens[index];
+
+            // Если ожидается ключевое слово, сравнение идёт только по лексеме.
+            if (expectedCode == TokenCode.Keyword)
+            {
+                if (current.Lexeme == expectedLexeme)
+                {
+                    index++; // потребляем токен
+                    return true;
+                }
+                else
+                {
+                    result.ErrorMessages.Add($"Ошибка в токене '{current.Lexeme}' (строка {current.Line}): ожидался {expectedDescription}.");
+                    index++; // потребляем ошибочный токен
+                    return true;
+                }
+            }
+            else
+            {
+                if (current.Code == expectedCode && (expectedLexeme == null || current.Lexeme == expectedLexeme))
+                {
+                    index++; // потребляем корректный токен
+                    return true;
+                }
+            }
+
+            // Если текущий токен входит в follow‑множество, значит ожидаемый токен отсутствует (виртуальная вставка)
+            if (IsTokenInFollow(current, followSet))
+            {
+                result.ErrorMessages.Add($"Ошибка в токене '{current.Lexeme}' (строка {current.Line}): ожидался {expectedDescription}.");
+                // Не потребляем текущий токен – он будет использован для следующего элемента.
+                return true;
+            }
+            else
+            {
+                // Текущий токен не соответствует и не принадлежит follow‑множеству – он лишний.
+                result.ErrorMessages.Add($"Ошибка: лишний токен '{current.Lexeme}' (строка {current.Line}), ожидался {expectedDescription}.");
+                index++; // пропускаем лишний токен
+                return ExpectToken(expectedCode, expectedLexeme, expectedDescription, followSet, result);
+            }
+        }
+
+        /// <summary>
+        /// Возвращает true, если данный токен входит в follow‑множество.
+        /// </summary>
+        private bool IsTokenInFollow(Token token, List<(TokenCode, string)> followSet)
+        {
+            foreach (var item in followSet)
+            {
+                if (token.Code == item.Item1 && (item.Item2 == null || token.Lexeme == item.Item2))
+                    return true;
+            }
+            return false;
+        }
+    }
+}
+
+
+
+
+
+
+
+

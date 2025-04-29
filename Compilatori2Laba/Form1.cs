@@ -192,8 +192,60 @@ namespace Compilatori2Laba
         }
 
         // 🔹 Функция для анализа текста
-        //private void buttonScan_Click(object sender, EventArgs e)
-        //{
+        private void buttonScan_Click(object sender, EventArgs e)
+        {
+            // Чтение текста из редактора
+            string inputText = richTextBox1.Text;
+
+            // Создаем сканер и получаем список токенов
+            Scanner scanner = new Scanner();
+            List<Token> tokens = scanner.Scan(inputText);
+
+            // Создаем парсер и выполняем синтаксический анализ всех деклараций
+            Parser parser = new Parser(tokens);
+            List<ParseResult> results = parser.ParseAllDeclarations();
+
+            // Вывод результатов в richTextBox2
+            richTextBox2.Clear();
+            int totalErrors = 0;
+            int declNumber = 1;
+            foreach (var res in results)
+            {
+                richTextBox2.AppendText($"Декларация #{declNumber}:\n");
+                foreach (var state in res.States)
+                {
+                    richTextBox2.AppendText(state + "\n");
+                }
+                if (res.ErrorMessages.Count > 0)
+                {
+                    richTextBox2.AppendText("Обнаружены ошибки:\n");
+                    foreach (var err in res.ErrorMessages)
+                    {
+                        richTextBox2.AppendText(err + "\n");
+                    }
+                }
+                else
+                {
+                    richTextBox2.AppendText("Анализ успешно завершен. Ошибок не обнаружено.\n");
+                }
+                richTextBox2.AppendText("\n");
+                totalErrors += res.ErrorCount;
+                declNumber++;
+            }
+            richTextBox2.AppendText($"Общее количество ошибок: {totalErrors}\n");
+        }
+
+
+
+
+
+
+
+
+
+
+        //private void buttonScan_Click(object sender, EventArgs e) 
+        //{ --- lr3
         //    //// Читаем текст из редактора
         //    //string inputText = richTextBox1.Text;
 
@@ -229,7 +281,7 @@ namespace Compilatori2Laba
         //    //        richTextBox2.AppendText(error + "\n");
         //    //    }
         //    //}
-        //    // Читаем исходный текст из редактора-----------------------------------------------
+        //    // Читаем исходный текст из редактора----------------------------------------------- lr3
         //    string inputText = richTextBox1.Text;
 
         //    // Получаем список токенов с помощью сканера
@@ -266,18 +318,18 @@ namespace Compilatori2Laba
         //        }
         //    }//--------------------------------------------------------------------------------
         //}
-        private void buttonScan_Click(object sender, EventArgs e)
-        {
-            string inputText = richTextBox1.Text;
-            var scanner = new Scanner();
-            List<Token> tokens = scanner.Scan(inputText);
+        //private void buttonScan_Click(object sender, EventArgs e)
+        //{
+        //    string inputText = richTextBox1.Text;
+        //    var scanner = new Scanner();
+        //    List<Token> tokens = scanner.Scan(inputText);
 
-            richTextBox2.Clear();
-            foreach (var token in tokens)
-            {
-                richTextBox2.AppendText($"Строка: {token.Line}, с позиции {token.StartPos} по {token.EndPos} — {token.Type}: \"{token.Lexeme}\" (код {(int)token.Code})\n");
-            }
-        }
+        //    richTextBox2.Clear();
+        //    foreach (var token in tokens)
+        //    {
+        //        richTextBox2.AppendText($"Строка: {token.Line}, с позиции {token.StartPos} по {token.EndPos} — {token.Type}: \"{token.Lexeme}\" (код {(int)token.Code})\n");
+        //    }
+        //}
     }
 }
 //using System;
